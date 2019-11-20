@@ -6,7 +6,7 @@ import operator
 from fractions import gcd
 from functools import reduce
 
-Item = namedtuple("Item", ['index', 'value', 'weight'])
+Item = namedtuple("Item", ['index', 'value', 'weight', 'density'])
 
 def _density_greedy(items, capacity, taken):
     # a second trivial greedy algorithm for filling the knapsack
@@ -100,7 +100,7 @@ def solve_it(input_data):
     for i in range(1, item_count+1):
         line = lines[i]
         parts = line.split()
-        items.append(Item(i-1, int(parts[0]), int(parts[1])))
+        items.append(Item(i-1, int(parts[0]), int(parts[1]), float(int(parts[0])/int(parts[1]))))
 
     value = 0
     weight = 0
