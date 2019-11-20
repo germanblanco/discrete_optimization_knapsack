@@ -8,11 +8,9 @@ from functools import reduce
 
 Item = namedtuple("Item", ['index', 'value', 'weight'])
 
-def density_greedy(items, capacity, taken):
+def _density_greedy(items, capacity, taken):
     # a second trivial greedy algorithm for filling the knapsack
     # it takes items with maximum value density first
-    value = 0
-    weight = 0
     remaining_capacity = capacity
     def compare_remaining_items(idx_item):
         index, item = idx_item
@@ -24,9 +22,7 @@ def density_greedy(items, capacity, taken):
     while remaining_capacity > min([item.weight for item in items if taken[item.index] == 0]):
         index, item = max(enumerate(items), key=compare_remaining_items)
         taken[item.index] = 1
-        value += item.value
-        weight += item.weight
-        remaining_capacity -= weight
+        remaining_capacity -= item.weight
 
     return taken
 
@@ -106,23 +102,17 @@ def solve_it(input_data):
         parts = line.split()
         items.append(Item(i-1, int(parts[0]), int(parts[1])))
 
-    # a second trivial greedy algorithm for filling the knapsack
-    # it takes items with maximum value density first
     value = 0
     weight = 0
     taken = [0]*len(items)
     optimal = 0
 
- #   new_items, new_capacity, _ = _normalize_capacity(items, capacity)
     if (len(items) * capacity) < 1000000000:
         taken = _dynamic_programming(items, capacity, taken)
-        taken_test = [0]*len(items)
-        _, taken_test = _branch_and_bound(items, capacity, taken_test)
-        if taken != taken_test:
-            raise Exception('Failed {} vs {}'.format(taken, taken_test))
         optimal = 1
-    else:
-        taken, optimal = _branch_and_bound(items, capacity, taken)
+
+    if optimal == 0:
+        taken = _density_greedy(items, capacity, taken)
 
     value = sum([item.value for item in items if taken[item.index] == 1])
     
