@@ -63,7 +63,7 @@ def _dynamic_programming(items, capacity, taken):
             row = row - items[column-1].weight
     return taken
 
-def _branch_and_bound(items, capacity, taken, index=0, value=0, node_limit=10000000):
+def _branch_and_bound(items, capacity, taken, index=0, value=0, node_limit=1000000):
     item = items[index]
     if node_limit != 0:
          _branch_and_bound.current_node_counter = node_limit
