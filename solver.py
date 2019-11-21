@@ -17,14 +17,36 @@ def _density_greedy(items, capacity, taken):
         if item.weight <= remaining_capacity and taken[item.index] == 0:
             return item.density
         else:
-            return 0
+            return 0.0
 
-    while remaining_capacity > min([item.weight for item in items if taken[item.index] == 0]):
+    while remaining_capacity > min([item.weight for item in items if taken[item.index] == 0 and item.value > 0]):
         index, item = max(enumerate(items), key=compare_remaining_items)
-        taken[item.index] = 1
-        remaining_capacity -= item.weight
+        if item.density > 0:
+            taken[item.index] = 1
+            remaining_capacity -= item.weight
 
     return taken
+
+def _optimistic_estimation(items, capacity, taken):
+    remaining_capacity = capacity
+    taken_copy = taken.copy()
+    def compare_remaining_items(idx_item):
+        index, item = idx_item
+        if item.weight <= remaining_capacity and taken_copy[item.index] == 0:
+            return item.density
+        else:
+            return 0.0
+
+    while remaining_capacity > 0:
+        index, item = max(enumerate(items), key=compare_remaining_items)
+        if item.density > 0:
+            taken_copy[item.index] = 1
+            if remaining_capacity >= item.weight:
+                remaining_capacity -= item.weight
+            else:
+                value = sum([item.value for item in items if taken_copy[item.index] == 1])
+                return value + remaining_capacity*item.density
+    return sum([item.value for item in items if taken_copy[item.index] == 1])
 
 def find_gcd(list):
     x = reduce(gcd, list)
@@ -93,6 +115,11 @@ def _branch_and_bound(items, capacity, taken, index=0, value=0, node_limit=10000
             result_value = value
             result_optimal = 1
     else:
+        current_value = _branch_and_bound.current_value
+        if current_value is not None:
+            remaining_value = _optimistic_estimation(items, capacity, taken)
+            if (value + remaining_value) < current_value:
+                return taken, value, 1
         taken_without, value_without, optimal = _branch_and_bound(items,
                                                                   capacity,
                                                                   taken,
@@ -156,6 +183,9 @@ def solve_it(input_data):
     if optimal == 0:
         taken = _density_greedy(items, capacity, taken)
         value = sum([item.value for item in items if taken[item.index] == 1])
+        weight = sum([item.weight for item in items if taken[item.index] == 1])
+        if weight > capacity:
+            raise Exception('Failed')
 
     if optimal == 0 and len(items) < 501:
         taken_copy = taken.copy()
